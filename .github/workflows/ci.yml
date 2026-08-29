@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test
+        run: dotnet test officecli.slnx -c Release --nologo
+
+  linux-arm64-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-arm64
+            image: mcr.microsoft.com/dotnet/runtime-deps:10.0-noble
+          - rid: linux-musl-arm64
+            image: mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Enable ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - name: Publish ${{ matrix.rid }}
+        run: >-
+          dotnet publish src/officecli/officecli.csproj -c Release
+          -r ${{ matrix.rid }} --self-contained true -p:PublishAot=false
+          -o publish/${{ matrix.rid }} --nologo
+      - name: Execute PPTX smoke on ARM64
+        env:
+          COMMANDS_JSON: >-
+            [{"op":"add","parent":"/","type":"slide","props":{"title":"ARM64 smoke"}},
+            {"op":"add","parent":"/slide[1]","type":"notes","props":{"text":"smoke notes"}}]
+        run: |
+          chmod +x publish/${{ matrix.rid }}/officecli
+          mkdir -p smoke/${{ matrix.rid }}
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/publish/${{ matrix.rid }}:/app:ro" \
+            -v "$PWD/smoke/${{ matrix.rid }}:/work" \
+            -w /work \
+            -e COMMANDS_JSON \
+            ${{ matrix.image }} \
+            sh -ec '
+              /app/officecli --version
+              /app/officecli create arm-smoke.pptx
+              /app/officecli batch arm-smoke.pptx --commands "$COMMANDS_JSON" --json
+              /app/officecli validate arm-smoke.pptx --json
+              /app/officecli view arm-smoke.pptx outline --json
+              /app/officecli close arm-smoke.pptx
+            '

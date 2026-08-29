@@ -126,6 +126,25 @@ public partial class PowerPointHandler
     /// <summary>Sentinel value for find: anchor resolution.</summary>
     private const int FindAnchorIndex = -99999;
 
+    /// <summary>
+    /// Canonicalize an insertion anchor before any caller interprets it. Keeping
+    /// this in one place prevents Add, CopyFrom and Move from drifting apart on
+    /// short paths, id/name selectors and last() predicates.
+    /// </summary>
+    private string ResolvePositionAnchorPath(string parentPath, string anchorPath)
+    {
+        if (!anchorPath.StartsWith("/", StringComparison.Ordinal))
+            anchorPath = parentPath.TrimEnd('/') + "/" + anchorPath;
+
+        anchorPath = NormalizePptxPathSegmentCasing(anchorPath);
+        anchorPath = NormalizeCellPath(anchorPath);
+        anchorPath = ResolveIdPath(anchorPath);
+        // Resolve first, then normalize again so long aliases such as
+        // row[last()] / column[last()] / cell[last()] become their canonical
+        // numeric tr/col/tc forms after last() has been expanded.
+        return NormalizeCellPath(ResolveLastPredicates(anchorPath));
+    }
+
     private int? ResolveAnchorPosition(string parentPath, InsertPosition? position)
     {
         if (position == null) return null;
@@ -141,12 +160,7 @@ public partial class PowerPointHandler
         if (anchorPath.StartsWith("find:", StringComparison.OrdinalIgnoreCase))
             return FindAnchorIndex;
 
-        // Normalize: if short form, prepend parentPath
-        if (!anchorPath.StartsWith("/"))
-            anchorPath = parentPath.TrimEnd('/') + "/" + anchorPath;
-
-        // Resolve @id=/@name= in the anchor path
-        anchorPath = ResolveIdPath(anchorPath);
+        anchorPath = ResolvePositionAnchorPath(parentPath, anchorPath);
 
         // For slide-level anchors (/slide[N])
         var slideMatch = Regex.Match(anchorPath, @"^/slide\[(\d+)\]$");
@@ -475,6 +489,8 @@ public partial class PowerPointHandler
                     return elementType switch
                     {
                         "tr" or "row" => table.Elements<Drawing.TableRow>().Count(),
+                        "col" or "column" => table.GetFirstChild<Drawing.TableGrid>()?
+                            .Elements<Drawing.GridColumn>().Count() ?? 0,
                         _ => 0,
                     };
                 }

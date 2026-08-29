@@ -137,7 +137,7 @@ jobs:
           publish/${{ matrix.name }} close test_smoke.docx
           rm -f test_smoke.docx
 
-      - name: Smoke test - .NET 8-only runtime (linux-x64)
+      - name: Smoke test - minimal Linux container (linux-x64)
         if: matrix.rid == 'linux-x64' && runner.os == 'Linux'
         run: |
           chmod +x publish/${{ matrix.name }}

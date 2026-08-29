@@ -621,6 +621,8 @@ print(slide["attributes"]["text"])
 
 编译需要 [.NET 10 SDK](https://dotnet.microsoft.com/download)。输出为自包含的原生二进制文件 -- .NET 已内嵌，运行时无需安装。
 
+Windows PowerShell 测试、执行策略处理、跨 RID 发布和 Linux ARM64 部署验证请参阅 [Windows 构建与发布指南](BUILDING.zh.md)。
+
 ```bash
 ./build.sh
 ```

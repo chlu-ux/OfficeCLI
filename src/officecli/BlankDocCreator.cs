@@ -699,6 +699,8 @@ public static class BlankDocCreator
         presentationPart.Presentation.Save();
 
         OfficeCliMetadata.StampOnCreate(doc);
+        doc.Dispose();
+        OfficeCli.Handlers.PptxPackageConformance.NormalizeInternalRelationshipTargets(path);
     }
 
     private static Shape CreateLayoutPlaceholder(uint id, string name, PlaceholderValues phType,

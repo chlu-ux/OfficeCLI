@@ -254,7 +254,7 @@ officecli add <file> <parent> --type <type> --index N [--prop ...]        # 0-ba
 officecli add <file> <parent> --from <path>                               # clone existing element
 ```
 
-`--after`, `--before`, `--index` are mutually exclusive. No position flag = append to end.
+`--after`, `--before`, `--index` are mutually exclusive. No position flag = append to end. PPTX anchors accept numeric, `@id`, `@name`, and `[last()]` paths consistently for add, `add --from`, and move.
 
 **Element types (with aliases):**
 

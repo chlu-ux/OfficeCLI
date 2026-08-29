@@ -727,7 +727,7 @@ public partial class PowerPointHandler
         var anchorFullPath = position?.After ?? position?.Before;
         if (string.IsNullOrEmpty(targetParentPath) && anchorFullPath != null && anchorFullPath.StartsWith("/"))
         {
-            var resolvedAnchor = ResolveIdPath(anchorFullPath);
+            var resolvedAnchor = ResolvePositionAnchorPath("/", anchorFullPath);
             var lastSlash = resolvedAnchor.LastIndexOf('/');
             if (lastSlash > 0)
                 targetParentPath = resolvedAnchor[..lastSlash];
@@ -775,7 +775,8 @@ public partial class PowerPointHandler
             SlideId? afterAnchor = null, beforeAnchor = null;
             if (position?.After != null)
             {
-                var afterMatch = Regex.Match(position.After.StartsWith("/") ? position.After : "/" + position.After, @"/slide\[(\d+)\]");
+                var afterPath = ResolvePositionAnchorPath("/", position.After);
+                var afterMatch = Regex.Match(afterPath, @"^/slide\[(\d+)\]$");
                 if (afterMatch.Success)
                 {
                     var ai = int.Parse(afterMatch.Groups[1].Value);
@@ -785,7 +786,8 @@ public partial class PowerPointHandler
             }
             else if (position?.Before != null)
             {
-                var beforeMatch = Regex.Match(position.Before.StartsWith("/") ? position.Before : "/" + position.Before, @"/slide\[(\d+)\]");
+                var beforePath = ResolvePositionAnchorPath("/", position.Before);
+                var beforeMatch = Regex.Match(beforePath, @"^/slide\[(\d+)\]$");
                 if (beforeMatch.Success)
                 {
                     var bi = int.Parse(beforeMatch.Groups[1].Value);
@@ -929,13 +931,13 @@ public partial class PowerPointHandler
         OpenXmlElement? shapeAfterAnchor = null, shapeBeforeAnchor = null;
         if (position?.After != null)
         {
-            var anchorPath = ResolveIdPath(position.After);
+            var anchorPath = ResolvePositionAnchorPath(effectiveParentPath, position.After);
             var (_, anchor) = ResolveSlideElement(anchorPath, slideParts);
             shapeAfterAnchor = anchor;
         }
         else if (position?.Before != null)
         {
-            var anchorPath = ResolveIdPath(position.Before);
+            var anchorPath = ResolvePositionAnchorPath(effectiveParentPath, position.Before);
             var (_, anchor) = ResolveSlideElement(anchorPath, slideParts);
             shapeBeforeAnchor = anchor;
         }
@@ -1184,7 +1186,6 @@ public partial class PowerPointHandler
 
     public string CopyFrom(string sourcePath, string targetParentPath, InsertPosition? position)
     {
-        var index = position?.Index;
         sourcePath = ResolveIdPath(sourcePath);
         targetParentPath = ResolveIdPath(targetParentPath);
         sourcePath = ResolveLastPredicates(sourcePath);
@@ -1227,7 +1228,8 @@ public partial class PowerPointHandler
         var slideCloneMatch = Regex.Match(sourcePath, @"^/slide\[(\d+)\]$");
         if (slideCloneMatch.Success && (targetParentPath is null or "/" or "" or "/presentation"))
         {
-            return CloneSlide(slideCloneMatch, slideParts, index);
+            var slideInsertIndex = ResolveAnchorPosition("/", position);
+            return CloneSlide(slideCloneMatch, slideParts, slideInsertIndex);
         }
 
         var (srcSlidePart, srcElement) = ResolveSlideElement(sourcePath, slideParts);
@@ -1265,6 +1267,7 @@ public partial class PowerPointHandler
         if (srcSlidePart != tgtSlidePart)
             CopyRelationships(clone, srcSlidePart, tgtSlidePart);
 
+        var index = ResolveAnchorPosition(targetParentPath, position);
         InsertAtPosition(tgtShapeTree, clone, index);
         GetSlide(tgtSlidePart).Save();
 
@@ -1303,7 +1306,8 @@ public partial class PowerPointHandler
         int? targetIdx = null;
         if (position?.After != null || position?.Before != null)
         {
-            var anchorPath = ResolveIdPath(position.After ?? position.Before!);
+            var anchorPath = ResolvePositionAnchorPath(
+                $"/slide[{slideIdx}]/table[{tableIdx}]", position.After ?? position.Before!);
             var anchorMatch = Regex.Match(anchorPath, @"^/slide\[(\d+)\]/table\[(\d+)\]/tr\[(\d+)\]$");
             if (!anchorMatch.Success ||
                 int.Parse(anchorMatch.Groups[1].Value) != slideIdx ||
@@ -1368,7 +1372,8 @@ public partial class PowerPointHandler
         int? targetIdx = null;
         if (position?.After != null || position?.Before != null)
         {
-            var anchorPath = ResolveIdPath(position.After ?? position.Before!);
+            var anchorPath = ResolvePositionAnchorPath(
+                $"/slide[{slideIdx}]/table[{tableIdx}]", position.After ?? position.Before!);
             var anchorMatch = Regex.Match(anchorPath, @"^/slide\[(\d+)\]/table\[(\d+)\]/tr\[(\d+)\]$");
             if (!anchorMatch.Success ||
                 int.Parse(anchorMatch.Groups[1].Value) != slideIdx ||
@@ -1434,7 +1439,8 @@ public partial class PowerPointHandler
         int? targetIdx = null;
         if (position?.After != null || position?.Before != null)
         {
-            var anchorPath = ResolveIdPath(position.After ?? position.Before!);
+            var anchorPath = ResolvePositionAnchorPath(
+                $"/slide[{slideIdx}]/table[{tableIdx}]/tr[{rowIdx}]", position.After ?? position.Before!);
             var anchorMatch = Regex.Match(anchorPath, @"^/slide\[(\d+)\]/table\[(\d+)\]/tr\[(\d+)\]/tc\[(\d+)\]$");
             if (!anchorMatch.Success ||
                 int.Parse(anchorMatch.Groups[1].Value) != slideIdx ||
@@ -1475,7 +1481,8 @@ public partial class PowerPointHandler
         {
             return position?.Index;
         }
-        var anchorPath = ResolveIdPath(position.After ?? position.Before!);
+        var anchorPath = ResolvePositionAnchorPath(
+            $"/slide[{slideIdx}]/table[{tableIdx}]", position.After ?? position.Before!);
         var anchorMatch = Regex.Match(anchorPath, @"^/slide\[(\d+)\]/table\[(\d+)\]/col\[(\d+)\]$");
         if (!anchorMatch.Success ||
             int.Parse(anchorMatch.Groups[1].Value) != slideIdx ||

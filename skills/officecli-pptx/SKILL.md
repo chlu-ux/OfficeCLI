@@ -252,7 +252,7 @@ officecli view "$FILE" issues           # empty slides, overflow hints
 officecli view "$FILE" stats            # counts + totals (incl. pictures missing alt)
 ```
 
-**Inspect one element.** XPath-style paths, 1-based. ALWAYS quote. Prefer `@name=` / `@id=` selectors over positional `[N]` (stable across reorderings). `[last()]` works. Add `--json` for machine output.
+**Inspect one element.** XPath-style paths, 1-based. ALWAYS quote. Prefer `@name=` / `@id=` selectors over positional `[N]` (stable across reorderings). `[last()]` works, including `--before` / `--after` anchors for add, `add --from`, and move. Add `--json` for machine output.
 
 ```bash
 officecli get "$FILE" "/slide[1]" --depth 1              # shape list with IDs and names

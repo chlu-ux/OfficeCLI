@@ -1,0 +1,4 @@
+.tmp*
+src/officecli/bin/Release/*
+src/officecli/obj/Release/*
+tests/

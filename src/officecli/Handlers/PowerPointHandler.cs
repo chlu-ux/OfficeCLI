@@ -2354,7 +2354,8 @@ public partial class PowerPointHandler : IDocumentHandler, Rendering.IRenderMode
         OfficeCli.Core.AtomicPackageWriter.Flush(
             _packageStream, _filePath,
             releaseLock: () => { _backingStream!.Dispose(); _backingStream = null; },
-            reopenLock: () => { _backingStream = new FileStream(_filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read); });
+            reopenLock: () => { _backingStream = new FileStream(_filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read); },
+            postProcessTemp: PptxPackageConformance.NormalizeInternalRelationshipTargets);
     }
 
     /// <summary>See <see cref="OfficeCli.Handlers.WordHandler.DiscardOnDispose"/> —
