@@ -86,6 +86,15 @@ officecli install
 
 ## 开发者 — 30 秒亲眼看到效果
 
+在选择原生渲染或严格预览流程前，可以先检查部署环境能力：
+
+```bash
+officecli capabilities --json
+officecli validate deck.pptx --profile ios-preview --json
+```
+
+能力报告包含操作系统、进程架构、运行时 RID、OfficeCLI 版本、原生/浏览器/Mermaid 渲染器状态以及支持的验证 profile。
+
 ```bash
 # 1. 安装（macOS / Linux）— 也可以：brew install officecli / npm install -g @officecli/officecli
 curl -fsSL https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.sh | bash

@@ -1147,7 +1147,7 @@ public class ResidentServer : IDisposable
                 NotifyWatchFullRefresh();
                 break;
             case "validate":
-                ExecuteValidate();
+                ExecuteValidate(request);
                 break;
             case "save":
                 ExecuteSave();
@@ -2531,13 +2531,20 @@ public class ResidentServer : IDisposable
     // mirrors the standard convention for diagnostic / lint tools.
     private int _lastValidateErrorCount;
 
-    private void ExecuteValidate()
+    private void ExecuteValidate(ResidentRequest request)
     {
-        var errors = _handler.Validate();
+        var profile = CommandBuilder.NormalizeValidationProfile(request.GetArg("profile", "schema"));
+        var report = CommandBuilder.RunValidation(_handler, profile);
+        var errors = report.Errors;
         _lastValidateErrorCount = errors.Count;
+        if (request.Json)
+        {
+            Console.WriteLine(CommandBuilder.FormatValidationReport(report, profile));
+            return;
+        }
         if (errors.Count == 0)
         {
-            Console.WriteLine("Validation passed: no errors found.");
+            Console.WriteLine($"Validation passed ({profile}): no errors found." + (report.Warnings.Count > 0 ? $" {report.Warnings.Count} warning(s)." : ""));
         }
         else
         {

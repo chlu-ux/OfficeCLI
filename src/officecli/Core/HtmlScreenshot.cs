@@ -69,6 +69,18 @@ internal static class HtmlScreenshot
     /// <summary>True when a chrome-family browser (Chrome/Chromium/Edge) is available.</summary>
     public static bool HasChromeFamily() => FindChrome() != null;
 
+    /// <summary>Installed screenshot backends, without launching a browser.</summary>
+    public static string[] AvailableBackends()
+    {
+        var result = new List<string>();
+        if (WhichFirst("playwright") != null) result.Add("playwright");
+        if (FindChrome() != null) result.Add("chrome");
+        if (FindFirefox() != null) result.Add("firefox");
+        return result.ToArray();
+    }
+
+    public static bool IsAvailable() => AvailableBackends().Length > 0;
+
     /// <summary>
     /// Screenshot <paramref name="htmlPath"/> in a chrome-family browser at an exact
     /// pixel window size, with a virtual-time budget (so async JS such as mermaid.js

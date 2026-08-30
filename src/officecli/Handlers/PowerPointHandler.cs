@@ -2329,6 +2329,26 @@ public partial class PowerPointHandler : IDocumentHandler, Rendering.IRenderMode
 
     public List<ValidationError> Validate() => RawXmlHelper.ValidateDocument(_doc, _filePath);
 
+    /// <summary>Serialize the current package state to a disposable validation snapshot.</summary>
+    internal string CreateValidationSnapshot()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"officecli-pptx-validate-{Guid.NewGuid():N}.pptx");
+        _doc.Save();
+        var source = (Stream?)_packageStream ?? _backingStream
+            ?? throw new ObjectDisposedException(nameof(PowerPointHandler));
+        var position = source.Position;
+        try
+        {
+            source.Position = 0;
+            using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            source.CopyTo(output);
+        }
+        finally { source.Position = position; }
+        return path;
+    }
+
+    internal bool ValidationSnapshotNeedsSaveConformance => _packageStream != null && Modified;
+
     public void Save()
     {
         // _doc writes through to _backingStream; force the FileStream buffer

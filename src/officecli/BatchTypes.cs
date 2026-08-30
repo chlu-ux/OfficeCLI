@@ -100,6 +100,7 @@ internal class BatchItemConverter : JsonConverter<BatchItem>
                 case "selector": item.Selector = reader.GetString(); break;
                 case "text": item.Text = reader.GetString(); break;
                 case "mode": item.Mode = reader.GetString(); break;
+                case "profile": item.Profile = reader.GetString(); break;
                 case "depth": item.Depth = reader.TokenType == JsonTokenType.Null ? null : reader.GetInt32(); break;
                 case "part": item.Part = reader.GetString(); break;
                 case "xpath": item.Xpath = reader.GetString(); break;
@@ -129,6 +130,7 @@ internal class BatchItemConverter : JsonConverter<BatchItem>
         if (value.Selector != null) writer.WriteString("selector", value.Selector);
         if (value.Text != null) writer.WriteString("text", value.Text);
         if (value.Mode != null) writer.WriteString("mode", value.Mode);
+        if (value.Profile != null) writer.WriteString("profile", value.Profile);
         if (value.Depth.HasValue) writer.WriteNumber("depth", value.Depth.Value);
         if (value.Part != null) writer.WriteString("part", value.Part);
         if (value.Xpath != null) writer.WriteString("xpath", value.Xpath);
@@ -160,6 +162,7 @@ public class BatchItem
     public string? Selector { get; set; }
     public string? Text { get; set; }
     public string? Mode { get; set; }
+    public string? Profile { get; set; }
     public int? Depth { get; set; }
     public string? Part { get; set; }
     public string? Xpath { get; set; }
@@ -176,7 +179,7 @@ public class BatchItem
     internal static readonly HashSet<string> KnownFields = new(StringComparer.OrdinalIgnoreCase)
     {
         "command", "op", "path", "parent", "type", "from", "index", "after", "before", "to", "path2",
-        "props", "selector", "text", "mode", "depth", "part", "xpath", "action", "xml", "dumpversion"
+        "props", "selector", "text", "mode", "profile", "depth", "part", "xpath", "action", "xml", "dumpversion"
     };
 
     public ResidentRequest ToResidentRequest()
@@ -195,6 +198,7 @@ public class BatchItem
         if (Selector != null) req.Args["selector"] = Selector;
         if (Text != null) req.Args["text"] = Text;
         if (Mode != null) req.Args["mode"] = Mode;
+        if (Profile != null) req.Args["profile"] = Profile;
         if (Depth.HasValue) req.Args["depth"] = Depth.Value.ToString();
         if (Part != null) req.Args["part"] = Part;
         if (Xpath != null) req.Args["xpath"] = Xpath;

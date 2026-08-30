@@ -14,6 +14,7 @@ export interface BatchItem {
   before?: string;
   to?: string;
   selector?: string;
+  profile?: "schema" | "strict-opc" | "ios-preview";
   props?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -21,6 +22,18 @@ export interface BatchItem {
 /** Parsed result: the JSON envelope (object/array) for --json commands, or raw
  * text for content commands (view/raw/dump). */
 export type Result = Record<string, unknown> | unknown[] | string;
+
+export interface RendererCapability { available: boolean; reason?: string | null; backends?: string[] | null; }
+export interface CapabilityReport {
+  schemaVersion: 1;
+  officeCliVersion: string;
+  os: string;
+  architecture: string;
+  runtimeIdentifier: string;
+  renderers: Record<"nativePowerPoint" | "nativeWord" | "htmlScreenshot" | "mermaidImage", RendererCapability>;
+  validationProfiles: Array<"schema" | "strict-opc" | "ios-preview">;
+}
+export interface CapabilityEnvelope { success: boolean; data: CapabilityReport; }
 
 export interface OpenOptions {
   /** CLI binary name or absolute path. Default "officecli". */
@@ -63,6 +76,9 @@ export function create(filePath: string, args?: string[], options?: OpenOptions)
 
 /** Open an existing document and return a live handle. */
 export function open(filePath: string, options?: OpenOptions): Promise<Document>;
+
+/** Detect platform, runtime, renderer, and validation-profile capabilities. */
+export function capabilities(options?: Pick<OpenOptions, "binary" | "autoInstall">): Promise<CapabilityEnvelope>;
 
 /** Install the officecli CLI via its official installer (unix only). */
 export function install(): void;

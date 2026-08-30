@@ -603,6 +603,15 @@ async function open(filePath, { binary = 'officecli', timeoutMs = 30000, autoIns
   return doc;
 }
 
+/** Return the CLI's platform/runtime/renderer/profile capability envelope. */
+async function capabilities({ binary = 'officecli', autoInstall = true } = {}) {
+  const bin = await ensureCliBinary(binary, autoInstall);
+  const r = runCli(bin, ['capabilities', '--json']);
+  if (r.status !== 0) throw new OfficeCliError(r.status == null ? -1 : r.status, r.stderr || r.stdout);
+  try { return JSON.parse(r.stdout); }
+  catch (_) { throw new OfficeCliError(-1, 'officecli capabilities returned invalid JSON'); }
+}
+
 /**
  * Install the officecli CLI binary via its OFFICIAL installer — explicit by
  * design (this SDK never auto-downloads behind your back). Runs install.ps1 via
@@ -641,4 +650,4 @@ function install() {
   }
 }
 
-module.exports = { open, create, install, Document, OfficeCliError, pipePaths };
+module.exports = { open, create, capabilities, install, Document, OfficeCliError, pipePaths };

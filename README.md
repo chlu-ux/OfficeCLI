@@ -86,6 +86,15 @@ This copies the binary to your PATH and installs the **officecli skill** into ev
 
 ## For Developers — See It Live in 30 Seconds
 
+Check deployment capabilities before choosing native rendering or a strict preview workflow:
+
+```bash
+officecli capabilities --json
+officecli validate deck.pptx --profile ios-preview --json
+```
+
+The report includes OS, process architecture, runtime identifier, OfficeCLI version, native/browser/Mermaid renderer availability, and supported validation profiles.
+
 ```bash
 # 1. Install (macOS / Linux) — or: brew install officecli / npm install -g @officecli/officecli
 curl -fsSL https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.sh | bash

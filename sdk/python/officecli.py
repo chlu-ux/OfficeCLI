@@ -575,6 +575,18 @@ def open(path, binary="officecli", timeout=30.0, auto_install=True):
     return doc
 
 
+def capabilities(binary="officecli", auto_install=True):
+    """Return the CLI capability envelope (platform, renderers, profiles)."""
+    binary = _ensure_binary(binary, auto_install)
+    result = _run_cli(binary, ["capabilities", "--json"])
+    if result.returncode != 0:
+        raise OfficeCliError(result.returncode, result.stderr or result.stdout)
+    try:
+        return json.loads(result.stdout)
+    except ValueError:
+        raise OfficeCliError(-1, "officecli capabilities returned invalid JSON") from None
+
+
 def install():
     """Install the officecli CLI binary via its OFFICIAL installer — install.sh on
     unix, install.ps1 on Windows. Reuses officecli's own installers (platform
@@ -614,7 +626,7 @@ def install():
 
 # Advertised surface = the command shell + its error. pipe_paths stays importable
 # (officecli.pipe_paths) as a debug helper but isn't part of the command API.
-__all__ = ["open", "create", "install", "Document", "OfficeCliError"]
+__all__ = ["open", "create", "capabilities", "install", "Document", "OfficeCliError"]
 
 
 if __name__ == "__main__":

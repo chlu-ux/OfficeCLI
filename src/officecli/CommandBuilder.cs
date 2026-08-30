@@ -186,6 +186,7 @@ static partial class CommandBuilder
         rootCommand.Add(BuildRawSetCommand(jsonOption));
         rootCommand.Add(BuildAddPartCommand(jsonOption));
         rootCommand.Add(BuildValidateCommand(jsonOption));
+        rootCommand.Add(BuildCapabilitiesCommand(jsonOption));
         rootCommand.Add(BuildSaveCommand(jsonOption));
         rootCommand.Add(BuildBatchCommand(jsonOption));
         rootCommand.Add(BuildDumpCommand(jsonOption));
@@ -1228,16 +1229,12 @@ static partial class CommandBuilder
             }
             case "validate":
             {
-                var errors = handler.Validate();
-                if (errors.Count == 0) return "Validation passed: no errors found.";
-                var lines = new List<string> { $"Found {errors.Count} validation error(s):" };
-                foreach (var err in errors)
-                {
-                    lines.Add($"  [{err.ErrorType}] {err.Description}");
-                    if (err.Path != null) lines.Add($"    Path: {err.Path}");
-                    if (err.Part != null) lines.Add($"    Part: {err.Part}");
-                }
-                return string.Join("\n", lines);
+                var profile = NormalizeValidationProfile(item.Profile);
+                var report = RunValidation(handler, profile);
+                var output = FormatValidationReport(report, profile);
+                if (report.Errors.Count > 0)
+                    throw new CliException(output) { Code = "validation_failed" };
+                return json ? output : $"Validation passed ({profile}): no errors found." + (report.Warnings.Count > 0 ? $" {report.Warnings.Count} warning(s)." : "");
             }
             default:
                 if (string.IsNullOrEmpty(item.Command))
